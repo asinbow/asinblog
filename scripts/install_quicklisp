@@ -1,0 +1,68 @@
+#!/bin/bash
+
+add_init_file=true             # -i
+used_version="2011-10-01"      # -v
+just_test=                     # -T
+
+quicklisp_lisp="quicklisp.lisp"
+quicklisp_url="http://beta.quicklisp.org/$quicklisp_lisp"
+
+install_quicklisp=install_quicklisp.lisp
+sharedir=share
+
+for arg in "$@"
+do
+  case "$arg" in
+    -i*)
+      add_init_file=${arg:2}
+      ;;
+
+    -v*)
+      used_version=${arg:2}
+      ;;
+
+    -T*)
+        just_test=true
+      ;;
+
+  esac
+
+done
+
+used_version_url="http://beta.quicklisp.org/dist/quicklisp/$used_version/distinfo.txt"
+echo "Remote file: $quicklisp_lisp"
+echo "Using version file: $used_version_url"
+
+if [[ $just_test = "" ]]
+then
+    rootdir=`pwd`
+    cd $sharedir
+    if [[ -f $quicklisp_lisp ]]
+    then
+        echo "Use $sharedir/$quicklisp_lisp to install"
+    else
+        echo "Fetching $quicklisp_url ..."
+        wget $quicklisp_url
+    fi
+
+    echo "
+
+(load \"quicklisp.lisp\")
+(quicklisp-quickstart:install)
+(let ((versions (ql-dist:available-versions (ql-dist:dist \"quicklisp\"))))
+  (ql-dist:install-dist \"$used_version_url\" :replace t))
+
+    " > $install_quicklisp
+
+    if [[ $add_init_file = "true" ]]
+    then
+        echo "
+(ql:add-to-init-file)
+        ">> $install_quicklisp
+    fi
+    echo "(quit)">> $install_quicklisp
+
+    sbcl --load $install_quicklisp
+    cd $rootdir
+fi
+

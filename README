@@ -1,0 +1,13 @@
+
+
+
+1. Install
+  1a. Install sbcl.
+    $ sudo sh ./scripts/install_sbcl
+
+  1b. Install quicklisp.
+    $ sh ./scripts/install_quicklisp
+
+  1c. Install all related packages
+    $ 
+

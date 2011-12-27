@@ -1,0 +1,77 @@
+#!/bin/bash
+
+declare -A mirrors
+mirrors[raw]="prdownloads.sourceforge.net"
+mirrors[Japan]="jaist.dl.sourceforge.net"
+declare -A platforms
+platforms[i686]="x86"
+platforms[x86_64]="x86-64"
+
+
+used_mirror=raw    # -m
+platform=`uname -m`  # -p
+version=1.0.54       # -v
+file_ext=tar.bz2     # -e
+just_test=           # -T
+
+subdir=project/sbcl/sbcl
+sharedir=share
+
+for arg in "$@"
+do
+  case "$arg" in
+    -m*)
+      used_mirror=${arg:2}
+      ;;
+
+    -p*)
+      platform=${arg:2}
+      ;;
+
+    -v*)
+      version=${arg:2}
+      ;;
+
+    -e*)
+        file_ext=${arg:2}
+      ;;
+
+    -T*)
+        just_test=true
+      ;;
+
+  esac
+
+done
+
+
+platform=${platforms[$platform]}
+if [[ $platform = "" ]]
+then
+    echo "Sorry, your hardware platform is not supported"
+    exit
+fi
+
+file_tag="sbcl-$version-$platform-linux"
+file_name="$file_tag-binary.$file_ext"
+sbcl_url="http://${mirrors[$used_mirror]}/$subdir/$version/$file_name"
+
+echo "Remote file: $sbcl_url"
+
+if [[ $just_test = "" ]]
+then
+    rootdir=`pwd`
+    cd $sharedir
+    if [[ -f $file_name ]]
+    then
+        echo "Use $sharedir/$file_name to install"
+    else
+        echo "Fetching $sbcl_url ..."
+        wget $sbcl_url
+    fi
+    bzip2 -cd $file_name | tar xf -
+    cd $file_tag
+    sudo sh ./install.sh
+    cd $rootdir
+fi
+
